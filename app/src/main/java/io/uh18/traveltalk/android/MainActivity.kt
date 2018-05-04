@@ -10,15 +10,13 @@ import android.view.View
 import io.uh18.traveltalk.android.model.ChatItem
 import com.google.android.gms.location.*
 import io.uh18.traveltalk.android.backend.Location
-import io.uh18.traveltalk.android.backend.createLocationService
 import kotlinx.android.synthetic.main.activity_main.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import timber.log.Timber
 import java.util.*
-import android.graphics.Bitmap
-
+import io.uh18.traveltalk.android.backend.RetrofitClient
 
 
 class MainActivity : AppCompatActivity() {
@@ -26,7 +24,6 @@ class MainActivity : AppCompatActivity() {
     private val chat = LinkedList<ChatItem>()
     private val myUserID = "0"
     private val messagePollingJob = io.uh18.traveltalk.android.jobs.MessagePollingJob()
-
 
 
     // provider for locations
@@ -41,7 +38,7 @@ class MainActivity : AppCompatActivity() {
             .setInterval(LOCATION_UPDATE)
             .setFastestInterval(LOCATION_UPDATE_FAST)
 
-    private val locationClient = createLocationService()
+    private val locationClient = RetrofitClient.createLocationService()
 
     private val sendLocationCallback: Callback<Location> = object : Callback<Location> {
         override fun onResponse(call: Call<Location>, response: Response<Location>) {
@@ -58,7 +55,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        var adapter = ChatAdapter(myUserID, this, 0, chat)
+        val adapter = ChatAdapter(myUserID, this, 0, chat)
 
         lvMessages.adapter = adapter
 
@@ -193,7 +190,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun send(message: String) {
-        if (message.isBlank()){
+        if (message.isBlank()) {
             return
         }
 

@@ -6,31 +6,35 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
+class RetrofitClient {
+    companion object {
 
-private val httpClient = OkHttpClient.Builder()
+        private val httpClient = OkHttpClient.Builder()
 
-private val logging = HttpLoggingInterceptor()
-        .setLevel(HttpLoggingInterceptor.Level.BASIC)
+        private val logging = HttpLoggingInterceptor()
+                .setLevel(HttpLoggingInterceptor.Level.BASIC)
 
 
-private var builder: Retrofit.Builder = Retrofit.Builder()
+        private var builder: Retrofit.Builder = Retrofit.Builder()
 
-private lateinit var retrofit: Retrofit
+        private lateinit var retrofit: Retrofit
 
-fun createLocationService(): LocationApi {
-    initBuilder()
-    return retrofit.create(LocationApi::class.java)
-}
+        fun createLocationService(): LocationApi {
+            initBuilder()
+            return retrofit.create(LocationApi::class.java)
+        }
 
-private fun initBuilder() {
-    if (!httpClient.interceptors().contains(logging)) {
-        httpClient.addInterceptor(logging)
-        builder.client(httpClient.build())
-                .addConverterFactory(GsonConverterFactory.create())
-                .baseUrl(SERVICE_URL)
-                .build()
+        private fun initBuilder() {
+            if (!httpClient.interceptors().contains(logging)) {
+                httpClient.addInterceptor(logging)
+                builder.client(httpClient.build())
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .baseUrl(SERVICE_URL)
+                        .build()
 
-        retrofit = builder.build()
+                retrofit = builder.build()
+            }
+        }
+
     }
 }
-
