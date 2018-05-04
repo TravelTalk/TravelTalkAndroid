@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter
  * Created by samuel.hoelzl on 04.05.18.
  */
 
-class ChatAdapπter(private var myUserId: String, context: Context?, resource: Int, objects: MutableList<ChatItem>?) : ArrayAdapter<ChatItem>(context, resource, objects) {
+class ChatAdapter(private var myUserId: String, context: Context?, resource: Int, objects: MutableList<ChatItem>?) : ArrayAdapter<ChatItem>(context, resource, objects) {
 
     
 
