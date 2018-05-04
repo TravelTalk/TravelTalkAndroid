@@ -6,6 +6,7 @@ import org.threeten.bp.Duration
 
 const val PERMISSION_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION
 const val PERMISSIONS_REQUEST_LOCATION: Int = 1000
+const val JOB_MESSAGE_POLLING: Long = 3000
 
 const val LOCATION_UPDATE_PRIORITY = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
 val LOCATION_UPDATE: Long = Duration.ofSeconds(30).toMillis()

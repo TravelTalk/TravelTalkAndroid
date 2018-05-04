@@ -13,11 +13,15 @@ import com.google.android.gms.location.*
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
 import java.util.*
+import android.graphics.Bitmap
+
+
 
 class MainActivity : AppCompatActivity() {
 
     private val chat = LinkedList<ChatItem>()
     private val myUserID = "0"
+    private val messagePollingJob = io.uh18.traveltalk.android.jobs.MessagePollingJob()
 
 
 
@@ -131,10 +135,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        messagePollingJob.stopTest()
+    }
 
     override fun onResume() {
         super.onResume()
         startLocationUpdates()
+        messagePollingJob.startTest()
     }
 
 
