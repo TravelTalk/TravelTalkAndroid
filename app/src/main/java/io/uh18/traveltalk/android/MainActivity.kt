@@ -13,7 +13,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.uh18.traveltalk.android.model.Location
 import io.uh18.traveltalk.android.backend.mock.TravelTalkClientMock
-import io.uh18.traveltalk.android.model.ChatItem
+import io.uh18.traveltalk.android.model.Message
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
 import java.util.*
@@ -21,7 +21,7 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val chat = LinkedList<ChatItem>()
+    private val chat = LinkedList<Message>()
     private val myUserID = "0"
     private val messagePollingJob = io.uh18.traveltalk.android.jobs.MessagePollingJob()
 
@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val adapter = ChatAdapter(myUserID, this, 0, chat)
+        val adapter = MessageAdapter(myUserID, this, 0, chat)
 
         lvMessages.adapter = adapter
 
@@ -204,8 +204,8 @@ class MainActivity : AppCompatActivity() {
 
         // TODO: benedikt.stricker 04.05.18 - send to server
         Timber.d("Send message %s", message)
-        chat.add(ChatItem(message, myUserID))
-        (lvMessages.adapter as ChatAdapter).notifyDataSetChanged()
+        chat.add(Message(message, myUserID))
+        (lvMessages.adapter as MessageAdapter).notifyDataSetChanged()
         et_message.text.clear()
 
     }

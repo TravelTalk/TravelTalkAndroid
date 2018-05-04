@@ -6,26 +6,21 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.TextView
-import io.uh18.traveltalk.android.model.ChatItem
+import io.uh18.traveltalk.android.model.Message
 
 /**
  * Created by samuel.hoelzl on 04.05.18.
  */
 
-class ChatAdapter(private var myUserId: String, context: Context?, resource: Int, objects: MutableList<ChatItem>?) : ArrayAdapter<ChatItem>(context, resource, objects) {
+class MessageAdapter(private var myUserId: String, context: Context?, resource: Int, objects: MutableList<Message>?) : ArrayAdapter<Message>(context, resource, objects) {
 
-    
-
-    override fun getCount(): Int {
-        return super.getCount()
-    }
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
 
         var rowItem = convertView
         var resId = 0
         val item = getItem(position)
-        if(item.userId == myUserId){
+        if (item.userId == myUserId) {
             resId = R.layout.list_item_conversation_right
         } else {
             resId = R.layout.list_item_conversation_left
