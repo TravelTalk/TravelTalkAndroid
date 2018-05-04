@@ -18,7 +18,8 @@ import retrofit2.Response
 import timber.log.Timber
 import java.util.*
 import android.graphics.Bitmap
-
+import org.threeten.bp.Instant
+import org.threeten.bp.LocalDateTime
 
 
 class MainActivity : AppCompatActivity() {
@@ -199,7 +200,7 @@ class MainActivity : AppCompatActivity() {
 
         // TODO: benedikt.stricker 04.05.18 - send to server
         Timber.d("Send message %s", message)
-        chat.add(ChatItem(message, myUserID))
+        chat.add(ChatItem(message, myUserID, LocalDateTime.now()))
         (lvMessages.adapter as ChatAdapter).notifyDataSetChanged()
         et_message.text.clear()
 
