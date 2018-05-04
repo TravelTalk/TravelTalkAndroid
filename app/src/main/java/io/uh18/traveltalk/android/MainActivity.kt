@@ -10,6 +10,7 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import io.uh18.traveltalk.android.model.ChatItem
 import com.google.android.gms.location.*
+import io.uh18.traveltalk.android.backend.RetrofitClient
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
 import java.util.*
@@ -37,6 +38,7 @@ class MainActivity : AppCompatActivity() {
             .setInterval(LOCATION_UPDATE)
             .setFastestInterval(LOCATION_UPDATE_FAST)
 
+    private val locationClient: RetrofitClient = RetrofitClient()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +69,9 @@ class MainActivity : AppCompatActivity() {
                 for (location in locationResult.locations) {
                     // Update UI with location data
                     Timber.d("New location: %s", location)
+                    val call = locationClient.service.sendLocation("abc", io.uh18.traveltalk.android
+                    .backend
+                            .Location(location.longitude, location.latitude))
                 }
             }
         }
