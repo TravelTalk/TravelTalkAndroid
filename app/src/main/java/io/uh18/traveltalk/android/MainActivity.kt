@@ -7,16 +7,16 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.view.View
-import io.uh18.traveltalk.android.model.ChatItem
 import com.google.android.gms.location.*
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import io.uh18.traveltalk.android.backend.Location
+import io.uh18.traveltalk.android.backend.RetrofitClient
+import io.uh18.traveltalk.android.model.ChatItem
 import kotlinx.android.synthetic.main.activity_main.*
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import timber.log.Timber
 import java.util.*
-import io.uh18.traveltalk.android.backend.RetrofitClient
 
 
 class MainActivity : AppCompatActivity() {
@@ -38,16 +38,10 @@ class MainActivity : AppCompatActivity() {
             .setInterval(LOCATION_UPDATE)
             .setFastestInterval(LOCATION_UPDATE_FAST)
 
-    private val locationClient = RetrofitClient.createLocationService()
+    private var disposable: Disposable? = null
 
-    private val sendLocationCallback: Callback<Location> = object : Callback<Location> {
-        override fun onResponse(call: Call<Location>, response: Response<Location>) {
-            val loc = response.body()
-        }
-
-        override fun onFailure(call: Call<Location>, throwable: Throwable) {
-            Timber.e(throwable)
-        }
+    private val locationServ by lazy {
+        RetrofitClient.createLocationService()
     }
 
 
@@ -80,8 +74,16 @@ class MainActivity : AppCompatActivity() {
                 for (location in locationResult.locations) {
                     // Update UI with location data
                     Timber.d("New location: %s", location)
-                    val sendLocationCallback: Callback<Location> = sendLocationCallback
-                    locationClient.sendLocation("abc", Location(location.longitude, location.latitude)).enqueue(sendLocationCallback)
+                    val loc = Location(location.longitude, location.latitude)
+
+                    locationServ.sendLocation(myUserID, loc)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(
+                                    { result -> Timber.d("Success: %s", result) },
+                                    { error -> Timber.e(error) }
+                            )
+
                 }
             }
         }
@@ -114,9 +116,14 @@ class MainActivity : AppCompatActivity() {
                     .addOnSuccessListener { location ->
                         // Got last known location. In some rare situations this can be null.
                         Timber.d("Last location: %s", location)
-                        locationClient.sendLocation("abc",
-                                Location(location.longitude, location.latitude))
-                                .enqueue(sendLocationCallback)
+                        val loc = Location(location.longitude, location.latitude)
+                        locationServ.sendLocation(myUserID, loc)
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(
+                                        { result -> Timber.d("Success: %s", result) },
+                                        { error -> Timber.e(error) }
+                                )
                     }.addOnFailureListener {
                         Timber.e(it, "Error getting last location")
                     }
@@ -182,6 +189,7 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         stopLocationUpdates()
+        disposable?.dispose()
     }
 
     private fun stopLocationUpdates() {

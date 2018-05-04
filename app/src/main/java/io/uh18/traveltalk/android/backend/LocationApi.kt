@@ -1,6 +1,6 @@
 package io.uh18.traveltalk.android.backend
 
-import retrofit2.Call
+import io.reactivex.Observable
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -9,6 +9,6 @@ import retrofit2.http.Path
 interface LocationApi {
 
     @POST("users/{userId}/locations")
-    fun sendLocation(@Path("userId") userId: String, @Body location: Location): Call<Location>
+    fun sendLocation(@Path("userId") userId: String, @Body location: Location): Observable<Location>
 
 }
