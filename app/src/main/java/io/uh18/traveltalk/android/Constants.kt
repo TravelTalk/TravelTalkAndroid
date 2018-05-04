@@ -11,3 +11,6 @@ const val JOB_MESSAGE_POLLING: Long = 3000
 const val LOCATION_UPDATE_PRIORITY = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
 val LOCATION_UPDATE: Long = Duration.ofSeconds(30).toMillis()
 val LOCATION_UPDATE_FAST: Long = Duration.ofSeconds(10).toMillis()
+
+
+const val SERVICE_URL = "http://10.11.167.248:5000/"

@@ -2,7 +2,6 @@ package io.uh18.traveltalk.android
 
 import android.app.AlertDialog
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
@@ -10,8 +9,12 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import io.uh18.traveltalk.android.model.ChatItem
 import com.google.android.gms.location.*
-import io.uh18.traveltalk.android.backend.RetrofitClient
+import io.uh18.traveltalk.android.backend.Location
+import io.uh18.traveltalk.android.backend.createLocationService
 import kotlinx.android.synthetic.main.activity_main.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import timber.log.Timber
 import java.util.*
 import android.graphics.Bitmap
@@ -38,7 +41,18 @@ class MainActivity : AppCompatActivity() {
             .setInterval(LOCATION_UPDATE)
             .setFastestInterval(LOCATION_UPDATE_FAST)
 
-    private val locationClient: RetrofitClient = RetrofitClient()
+    private val locationClient = createLocationService()
+
+    private val sendLocationCallback: Callback<Location> = object : Callback<Location> {
+        override fun onResponse(call: Call<Location>, response: Response<Location>) {
+            val loc = response.body()
+        }
+
+        override fun onFailure(call: Call<Location>, throwable: Throwable) {
+            Timber.e(throwable)
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,9 +83,8 @@ class MainActivity : AppCompatActivity() {
                 for (location in locationResult.locations) {
                     // Update UI with location data
                     Timber.d("New location: %s", location)
-                    val call = locationClient.service.sendLocation("abc", io.uh18.traveltalk.android
-                    .backend
-                            .Location(location.longitude, location.latitude))
+                    val sendLocationCallback: Callback<Location> = sendLocationCallback
+                    locationClient.sendLocation("abc", Location(location.longitude, location.latitude)).enqueue(sendLocationCallback)
                 }
             }
         }
@@ -101,9 +114,12 @@ class MainActivity : AppCompatActivity() {
         } else {
             // Permission has already been granted
             fusedLocationClient.lastLocation
-                    .addOnSuccessListener { location: Location? ->
+                    .addOnSuccessListener { location ->
                         // Got last known location. In some rare situations this can be null.
                         Timber.d("Last location: %s", location)
+                        locationClient.sendLocation("abc",
+                                Location(location.longitude, location.latitude))
+                                .enqueue(sendLocationCallback)
                     }.addOnFailureListener {
                         Timber.e(it, "Error getting last location")
                     }
