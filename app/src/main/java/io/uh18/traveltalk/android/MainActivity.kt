@@ -12,7 +12,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.uh18.traveltalk.android.backend.Location
-import io.uh18.traveltalk.android.backend.RetrofitClient
+import io.uh18.traveltalk.android.backend.mock.TravelTalkClientMock
 import io.uh18.traveltalk.android.model.ChatItem
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
     private var disposable: Disposable? = null
 
     private val locationServ by lazy {
-        RetrofitClient.createLocationService()
+        TravelTalkClientMock().createLocationService()
     }
 
 
