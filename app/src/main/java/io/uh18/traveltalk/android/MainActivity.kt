@@ -3,6 +3,7 @@ package io.uh18.traveltalk.android
 import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
@@ -40,8 +41,12 @@ class MainActivity : AppCompatActivity() {
 
     private var disposable: Disposable? = null
 
-    private val locationServ by lazy {
+    private val locationService by lazy {
         TravelTalkClientMock().createLocationService()
+    }
+
+    private val chatService by lazy {
+        TravelTalkClientMock().createChatService()
     }
 
 
@@ -76,7 +81,7 @@ class MainActivity : AppCompatActivity() {
                     Timber.d("New location: %s", location)
                     val loc = Location(location.longitude, location.latitude)
 
-                    locationServ.sendLocation(myUserID, loc)
+                    locationService.sendLocation(myUserID, loc)
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(
@@ -117,7 +122,7 @@ class MainActivity : AppCompatActivity() {
                         // Got last known location. In some rare situations this can be null.
                         Timber.d("Last location: %s", location)
                         val loc = Location(location.longitude, location.latitude)
-                        locationServ.sendLocation(myUserID, loc)
+                        locationService.sendLocation(myUserID, loc)
                                 .subscribeOn(Schedulers.io())
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(
@@ -202,11 +207,24 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // TODO: benedikt.stricker 04.05.18 - send to server
+        val msg = Message(message, myUserID)
         Timber.d("Send message %s", message)
-        chat.add(Message(message, myUserID))
-        (lvMessages.adapter as MessageAdapter).notifyDataSetChanged()
-        et_message.text.clear()
+        chatService.sendMessage(msg)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { result ->
+                            Timber.d("Success: %s", result)
+                            chat.add(msg)
+                            (lvMessages.adapter as MessageAdapter).notifyDataSetChanged()
+                            et_message.text.clear()
 
+                        },
+                        { error ->
+                            Timber.e(error)
+                            Snackbar.make(root, "Can't send message", Snackbar.LENGTH_SHORT)
+                        }
+
+                )
     }
 }
