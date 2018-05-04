@@ -3,6 +3,7 @@
     package="io.uh18.traveltalk.android">
 
     <application
+        android:name=".TravelTalkApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
