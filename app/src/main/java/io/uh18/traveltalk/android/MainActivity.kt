@@ -9,6 +9,7 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import com.google.android.gms.location.*
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
@@ -18,13 +19,13 @@ import io.uh18.traveltalk.android.model.Message
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
 
     private val chat = LinkedList<Message>()
     private val myUserID = "0"
-    private val messagePollingJob = io.uh18.traveltalk.android.jobs.MessagePollingJob()
 
 
     // provider for locations
@@ -69,6 +70,35 @@ class MainActivity : AppCompatActivity() {
         }
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        Observable.interval(10, TimeUnit.SECONDS, Schedulers.io())
+                .map { tick ->
+                    Timber.d("Tick %s", tick)
+                    chatService.getMessages(myUserID)
+                }
+                .doOnError { e ->
+                    Timber.e(e, "Error getting messages")
+                }
+                .retry()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { result ->
+                            result.subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe({ it.forEach(this::addMessage) }
+                                    )
+
+                        },
+                        { error -> Timber.e(error) })
+
+        chatService.getMessages(myUserID)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { result -> Timber.d("Success: %s", result) },
+                        { error -> Timber.e(error) }
+                )
 
 
         ensurePermissions()
@@ -165,15 +195,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-        messagePollingJob.stopTest()
-    }
-
     override fun onResume() {
         super.onResume()
         startLocationUpdates()
-        messagePollingJob.startTest()
     }
 
 
@@ -215,8 +239,7 @@ class MainActivity : AppCompatActivity() {
                 .subscribe(
                         { result ->
                             Timber.d("Success: %s", result)
-                            chat.add(msg)
-                            (lvMessages.adapter as MessageAdapter).notifyDataSetChanged()
+                            addMessage(msg)
                             et_message.text.clear()
 
                         },
@@ -226,5 +249,10 @@ class MainActivity : AppCompatActivity() {
                         }
 
                 )
+    }
+
+    private fun addMessage(msg: Message) {
+        chat.add(msg)
+        (lvMessages.adapter as MessageAdapter).notifyDataSetChanged()
     }
 }
