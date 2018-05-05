@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit
 class MainActivity : AppCompatActivity() {
 
     private var chat :ArrayList<Message> = ArrayList()
-    private val myUserID = "0"
+    private lateinit var myUserID: String
 
     private var travelDb: TravelDataBase? = null
     private val disposable = CompositeDisposable()
@@ -59,6 +59,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        myUserID = AppUtility.getUserId(this)
         setContentView(R.layout.activity_main)
         travelDb = TravelDataBase.getInstance(this)
 
