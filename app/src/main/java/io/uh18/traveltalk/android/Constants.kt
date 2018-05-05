@@ -12,5 +12,7 @@ const val LOCATION_UPDATE_PRIORITY = LocationRequest.PRIORITY_BALANCED_POWER_ACC
 val LOCATION_UPDATE: Long = Duration.ofSeconds(30).toMillis()
 val LOCATION_UPDATE_FAST: Long = Duration.ofSeconds(10).toMillis()
 
+var PREFERENCES_USER_ID = "PREFERENCES_USER_ID"
+
 
 const val SERVICE_URL = "http://10.11.167.248:5000/"
