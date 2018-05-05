@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
                     chatService.getMessages(myUserID)
                 }
                 .doOnError { e ->
-                    Timber.e(e, "Error getting messages")
+                    Timber.e(e, "Error getting messages in doOnError")
                 }
                 .retry()
                 .subscribeOn(Schedulers.io())
@@ -93,20 +93,10 @@ class MainActivity : AppCompatActivity() {
                         { result ->
                             result.subscribeOn(Schedulers.io())
                                     .observeOn(AndroidSchedulers.mainThread())
-                                    .subscribe({ it.forEach(this::addMessage) }
-                                    )
+                                    .subscribe({ it.forEach(this::addMessage) })
 
                         },
-                        { error -> Timber.e(error) })
-
-        chatService.getMessages(myUserID)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        { result -> Timber.d("Success: %s", result) },
-                        { error -> Timber.e(error) }
-                )
-
+                        { error -> Timber.e(error, "Error getting messages in subscribe") })
 
         ensurePermissions()
 
@@ -254,18 +244,19 @@ class MainActivity : AppCompatActivity() {
 
         val msg = Message(null,message, myUserID, LocalDateTime.now())
         Timber.d("Send message %s", message)
+        addMessage(msg)
+        et_message.text.clear()
         chatService.sendMessage(msg)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         { result ->
                             Timber.d("Success: %s", result)
-                            addMessage(msg)
-                            et_message.text.clear()
 
                         },
                         { error ->
-                            Timber.e(error)
+                            Timber.e(error, "Can't send message")
+                            removeMessage(msg)
                             Snackbar.make(root, "Can't send message", Snackbar.LENGTH_SHORT)
                         }
 
@@ -293,4 +284,9 @@ class MainActivity : AppCompatActivity() {
 
         et_message.text.clear()    }
 
+
+    private fun removeMessage(msg: Message){
+        chat.remove(msg)
+        (lvMessages.adapter as MessageAdapter).notifyDataSetChanged()
+    }
 }
