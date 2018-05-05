@@ -3,6 +3,7 @@ package io.uh18.traveltalk.android.backend.mock
 import io.reactivex.Observable
 import io.uh18.traveltalk.android.backend.ChatApi
 import io.uh18.traveltalk.android.model.Message
+import org.threeten.bp.LocalDateTime
 import retrofit2.mock.BehaviorDelegate
 import timber.log.Timber
 import java.util.*
@@ -26,7 +27,7 @@ class ChatApiMock(private val delegate: BehaviorDelegate<ChatApi>) : ChatApi {
         val start = random.nextInt(words.size - n)
 
         return Message(words.slice(start..start + n).joinToString(" "),
-                UUID.randomUUID().toString())
+                UUID.randomUUID().toString(), LocalDateTime.now())
     }
 
     override fun sendMessage(message: Message): Observable<Message> {

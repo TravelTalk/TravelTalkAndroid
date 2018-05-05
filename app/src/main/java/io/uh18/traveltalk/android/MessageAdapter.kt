@@ -28,6 +28,8 @@ class MessageAdapter(private var myUserId: String, context: Context?, resource: 
         rowItem = LayoutInflater.from(context).inflate(resId, parent, false)
         var tvMessage = rowItem.findViewById<TextView>(R.id.message)
         tvMessage.text = item.message
+        var tvTimeStamp = rowItem.findViewById<TextView>(R.id.timeStamp)
+        tvTimeStamp.text = org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm").format(item.timeStamp)
 
         return rowItem!!
     }
