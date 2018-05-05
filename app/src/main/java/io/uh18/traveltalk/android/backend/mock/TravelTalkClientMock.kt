@@ -35,6 +35,9 @@ class TravelTalkClientMock : TravelTalkClient {
 
     private fun initBuilder() {
 
+        behavior.setFailurePercent(0)
+        behavior.setErrorPercent(0)
+
         val retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .baseUrl(SERVICE_URL)
