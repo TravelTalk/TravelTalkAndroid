@@ -3,30 +3,32 @@ package io.uh18.traveltalk.android
 import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import com.google.android.gms.location.*
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import io.uh18.traveltalk.android.backend.Location
+import io.uh18.traveltalk.android.model.Location
 import io.uh18.traveltalk.android.backend.mock.TravelTalkClientMock
-import io.uh18.traveltalk.android.model.ChatItem
+import io.uh18.traveltalk.android.model.Message
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
 import java.util.*
 import android.graphics.Bitmap
 import org.threeten.bp.Instant
 import org.threeten.bp.LocalDateTime
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
 
-    private val chat = LinkedList<ChatItem>()
+    private val chat = LinkedList<Message>()
     private val myUserID = "0"
-    private val messagePollingJob = io.uh18.traveltalk.android.jobs.MessagePollingJob()
 
 
     // provider for locations
@@ -43,8 +45,12 @@ class MainActivity : AppCompatActivity() {
 
     private var disposable: Disposable? = null
 
-    private val locationServ by lazy {
+    private val locationService by lazy {
         TravelTalkClientMock().createLocationService()
+    }
+
+    private val chatService by lazy {
+        TravelTalkClientMock().createChatService()
     }
 
 
@@ -52,7 +58,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val adapter = ChatAdapter(myUserID, this, 0, chat)
+        val adapter = MessageAdapter(myUserID, this, 0, chat)
 
         lvMessages.adapter = adapter
 
@@ -68,6 +74,35 @@ class MainActivity : AppCompatActivity() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
+        Observable.interval(10, TimeUnit.SECONDS, Schedulers.io())
+                .map { tick ->
+                    Timber.d("Tick %s", tick)
+                    chatService.getMessages(myUserID)
+                }
+                .doOnError { e ->
+                    Timber.e(e, "Error getting messages")
+                }
+                .retry()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { result ->
+                            result.subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe({ it.forEach(this::addMessage) }
+                                    )
+
+                        },
+                        { error -> Timber.e(error) })
+
+        chatService.getMessages(myUserID)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { result -> Timber.d("Success: %s", result) },
+                        { error -> Timber.e(error) }
+                )
+
 
         ensurePermissions()
 
@@ -79,7 +114,7 @@ class MainActivity : AppCompatActivity() {
                     Timber.d("New location: %s", location)
                     val loc = Location(location.longitude, location.latitude)
 
-                    locationServ.sendLocation(myUserID, loc)
+                    locationService.sendLocation(myUserID, loc)
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(
@@ -120,7 +155,7 @@ class MainActivity : AppCompatActivity() {
                         // Got last known location. In some rare situations this can be null.
                         Timber.d("Last location: %s", location)
                         val loc = Location(location.longitude, location.latitude)
-                        locationServ.sendLocation(myUserID, loc)
+                        locationService.sendLocation(myUserID, loc)
                                 .subscribeOn(Schedulers.io())
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(
@@ -163,15 +198,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-        messagePollingJob.stopTest()
-    }
-
     override fun onResume() {
         super.onResume()
         startLocationUpdates()
-        messagePollingJob.startTest()
     }
 
 
@@ -205,11 +234,28 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // TODO: benedikt.stricker 04.05.18 - send to server
+        val msg = Message(message, myUserID, LocalDateTime.now())
         Timber.d("Send message %s", message)
-        chat.add(ChatItem(message, myUserID, LocalDateTime.now()))
-        (lvMessages.adapter as ChatAdapter).notifyDataSetChanged()
-        et_message.text.clear()
+        chatService.sendMessage(msg)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { result ->
+                            Timber.d("Success: %s", result)
+                            addMessage(msg)
+                            et_message.text.clear()
 
+                        },
+                        { error ->
+                            Timber.e(error)
+                            Snackbar.make(root, "Can't send message", Snackbar.LENGTH_SHORT)
+                        }
+
+                )
+    }
+
+    private fun addMessage(msg: Message) {
+        chat.add(msg)
+        (lvMessages.adapter as MessageAdapter).notifyDataSetChanged()
     }
 }

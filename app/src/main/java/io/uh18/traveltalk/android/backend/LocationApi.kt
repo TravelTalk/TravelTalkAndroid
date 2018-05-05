@@ -1,6 +1,7 @@
 package io.uh18.traveltalk.android.backend
 
 import io.reactivex.Observable
+import io.uh18.traveltalk.android.model.Location
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Path

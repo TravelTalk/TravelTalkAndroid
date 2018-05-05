@@ -24,6 +24,12 @@ class TravelTalkClientImpl : TravelTalkClient {
         return retrofit.create(LocationApi::class.java)
     }
 
+    override fun createChatService(): ChatApi {
+        initBuilder()
+        return retrofit.create(ChatApi::class.java)
+    }
+
+
     private fun initBuilder() {
         if (!httpClient.interceptors().contains(logging)) {
             httpClient.addInterceptor(logging)
