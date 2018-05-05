@@ -230,7 +230,7 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         stopLocationUpdates()
-        disposable?.dispose()
+        disposable.dispose()
     }
 
     private fun stopLocationUpdates() {
@@ -280,7 +280,7 @@ class MainActivity : AppCompatActivity() {
                     chat.add(message)
                     (lvMessages.adapter as MessageAdapter).notifyDataSetInvalidated()
                 },
-                        { error -> Timber.e( "Unable to insert message", error) }))
+                        { error -> Timber.e(error, "Unable to insert message") }))
 
 
         et_message.text.clear()    }
