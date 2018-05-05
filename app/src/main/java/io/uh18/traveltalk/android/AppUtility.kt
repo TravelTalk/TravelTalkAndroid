@@ -19,6 +19,7 @@ class AppUtility {
                 uuid = UUID.randomUUID().toString()
                 val editor = preferences.edit()
                 editor.putString(PREFERENCES_USER_ID, uuid)
+                editor.apply()
             }
             return uuid
         }
