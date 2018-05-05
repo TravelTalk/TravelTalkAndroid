@@ -26,7 +26,7 @@ class ChatApiMock(private val delegate: BehaviorDelegate<ChatApi>) : ChatApi {
         val n = random.nextInt(9) + 1
         val start = random.nextInt(words.size - n)
 
-        return Message(words.slice(start..start + n).joinToString(" "),
+        return Message(null, words.slice(start..start + n).joinToString(" "),
                 UUID.randomUUID().toString(), LocalDateTime.now())
     }
 

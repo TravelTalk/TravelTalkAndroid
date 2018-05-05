@@ -4,6 +4,8 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
+apply plugin: 'kotlin-kapt'
+
 android {
     compileSdkVersion 27
     defaultConfig {
@@ -52,5 +54,15 @@ dependencies {
 
     // 310 abp
     implementation 'com.jakewharton.threetenabp:threetenabp:1.1.0'
+
+    //room rx
+    implementation "android.arch.persistence.room:runtime:1.0.0"
+    implementation "android.arch.persistence.room:rxjava2:1.0.0"
+
+    kapt "android.arch.persistence.room:compiler:1.0.0"
+
+    debugCompile 'com.amitshekhar.android:debug-db:1.0.1'
+
+
 
 }

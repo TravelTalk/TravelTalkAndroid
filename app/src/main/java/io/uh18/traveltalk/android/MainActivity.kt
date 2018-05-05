@@ -10,25 +10,29 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import com.google.android.gms.location.*
 import io.reactivex.Observable
+import io.reactivex.Completable
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import io.uh18.traveltalk.android.model.Location
 import io.uh18.traveltalk.android.backend.mock.TravelTalkClientMock
 import io.uh18.traveltalk.android.model.Message
+import io.uh18.traveltalk.android.db.TravelDataBase
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
 import java.util.*
-import android.graphics.Bitmap
-import org.threeten.bp.Instant
 import org.threeten.bp.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
 
-    private val chat = LinkedList<Message>()
+    private var chat :ArrayList<Message> = ArrayList()
     private val myUserID = "0"
+
+    private var travelDb: TravelDataBase? = null
+    private val disposable = CompositeDisposable()
+
 
 
     // provider for locations
@@ -43,7 +47,6 @@ class MainActivity : AppCompatActivity() {
             .setInterval(LOCATION_UPDATE)
             .setFastestInterval(LOCATION_UPDATE_FAST)
 
-    private var disposable: Disposable? = null
 
     private val locationService by lazy {
         TravelTalkClientMock().createLocationService()
@@ -57,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        travelDb = TravelDataBase.getInstance(this)
 
         val adapter = MessageAdapter(myUserID, this, 0, chat)
 
@@ -201,6 +205,20 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         startLocationUpdates()
+        loadMessages()
+    }
+
+    private fun loadMessages() {
+
+        travelDb?.messageDao()?.getAll()!!.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    result ->
+                    Timber.d("messages loaded")
+                    chat.clear()
+                    chat.addAll(result)
+                    (lvMessages.adapter as MessageAdapter).notifyDataSetInvalidated()
+                })
     }
 
 
@@ -234,7 +252,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val msg = Message(message, myUserID, LocalDateTime.now())
+        val msg = Message(null,message, myUserID, LocalDateTime.now())
         Timber.d("Send message %s", message)
         chatService.sendMessage(msg)
                 .subscribeOn(Schedulers.io())
@@ -254,8 +272,25 @@ class MainActivity : AppCompatActivity() {
                 )
     }
 
-    private fun addMessage(msg: Message) {
-        chat.add(msg)
-        (lvMessages.adapter as MessageAdapter).notifyDataSetChanged()
+
+    fun insertMessage(message: Message): Completable {
+        return Completable.fromAction {
+            travelDb?.messageDao()?.insert(message)
+        }
     }
+
+    private fun addMessage(message: Message) {
+        disposable.add(insertMessage(message)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    Timber.d("message inserted")
+                    chat.add(message)
+                    (lvMessages.adapter as MessageAdapter).notifyDataSetInvalidated()
+                },
+                        { error -> Timber.e( "Unable to insert message", error) }))
+
+
+        et_message.text.clear()    }
+
 }
